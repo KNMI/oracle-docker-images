@@ -49,6 +49,7 @@ ENV ORACLE_HOME=/u01/oracle \
 RUN mkdir -p /u01 && \
     chmod a+xr /u01 && \
     useradd -b /u01 -d /u01/oracle -m -s /bin/bash oracle && \
+    chown oracle:oracle /u01 && \
     mkdir -p /u01/oracle/container-scripts
 
 # Copy packages and scripts
