@@ -1,3 +1,12 @@
+FROM oracle/serverjre:8
+
+ENV FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
+    FMW_JAR=fmw_12.2.1.3.0_infrastructure.jar
+
+COPY $FMW_PKG /
+
+RUN $JAVA_HOME/bin/jar xf /$FMW_PKG
+
 #Copyright (c) 2014-2018 Oracle and/or its affiliates. All rights reserved.
 #
 # Licensed under the Universal Permissive License v 1.0 as shown at http://oss.oracle.com/licenses/upl.
@@ -32,17 +41,30 @@ ENV ORACLE_HOME=/u01/oracle \
     DOMAIN_NAME="${DOMAIN_NAME:-InfraDomain}" \
     DOMAIN_HOME=/u01/oracle/user_projects/domains/${DOMAIN_NAME:-InfraDomain} \
     VOLUME_DIR=/u01/oracle/user_projects \
-    PATH=$PATH:/usr/java/default/bin:/u01/oracle/oracle_common/common/bin:/u01/oracle/wlserver/common/bin:/u01/oracle/container-scripts \
-    FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
+    PATH=$PATH:/usr/java/default/bin:/u01/oracle/oracle_common/common/bin:/u01/oracle/wlserver/common/bin:/u01/oracle/container-scripts
+
+#USER root
+# Setup subdirectory for FMW install package and container-scripts
+# -----------------------------------------------------------------
+RUN mkdir -p /u01 && \
+    chmod a+xr /u01 && \
+    useradd -b /u01 -d /u01/oracle -m -s /bin/bash oracle && \
+    mkdir -p /u01/oracle/container-scripts
+
+# Copy packages and scripts
+# -------------
+COPY container-scripts/* /u01/oracle/container-scripts/
+
+# Environment variables required for this build (do NOT change)
+# -------------------------------------------------------------
+ENV FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
     FMW_JAR=fmw_12.2.1.3.0_infrastructure.jar
 
 # Copy packages
 # -------------
-ADD --chown=oracle:oracle $FMW_PKG install.file oraInst.loc oracle /u01/
-RUN chmod a+xr /u01 && \
-    useradd -b /u01 -d /u01/oracle -m -s /bin/bash oracle && \
-    mkdir -p /u01/oracle/container-scripts && \
-    chmod +xr $SCRIPT_FILE && \
+COPY --from=0 --chown=oracle:oracle /$FMW_JAR /u01/
+COPY --chown=oracle:oracle install.file oraInst.loc /u01/
+RUN chmod +xr $SCRIPT_FILE && \
     yum install -y libaio && \
     rm -rf /var/cache/yum && \
     mkdir -p $VOLUME_DIR && \
