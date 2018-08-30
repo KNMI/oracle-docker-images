@@ -24,7 +24,6 @@ FROM oracle/serverjre:8
 # ----------
 MAINTAINER Monica Riccelli <monica.riccelli@oracle.com>
 
-
 # Common environment variables required for this build
 # ----------------------------------------------------
 ENV ORACLE_HOME=/u01/oracle \
@@ -33,20 +32,13 @@ ENV ORACLE_HOME=/u01/oracle \
     DOMAIN_NAME="${DOMAIN_NAME:-InfraDomain}" \
     DOMAIN_HOME=/u01/oracle/user_projects/domains/${DOMAIN_NAME:-InfraDomain} \
     VOLUME_DIR=/u01/oracle/user_projects \
-    PATH=$PATH:/usr/java/default/bin:/u01/oracle/oracle_common/common/bin:/u01/oracle/wlserver/common/bin:/u01/oracle/container-scripts
-
-# Copy packages and scripts
-# -------------
-COPY container-scripts/* /u01/oracle/container-scripts/
-
-# Environment variables required for this build (do NOT change)
-# -------------------------------------------------------------
-ENV FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
+    PATH=$PATH:/usr/java/default/bin:/u01/oracle/oracle_common/common/bin:/u01/oracle/wlserver/common/bin:/u01/oracle/container-scripts \
+    FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
     FMW_JAR=fmw_12.2.1.3.0_infrastructure.jar
 
 # Copy packages
 # -------------
-ADD --chown=oracle:oracle $FMW_PKG install.file oraInst.loc /u01/
+ADD --chown=oracle:oracle $FMW_PKG install.file oraInst.loc oracle /u01/
 RUN chmod a+xr /u01 && \
     useradd -b /u01 -d /u01/oracle -m -s /bin/bash oracle && \
     mkdir -p /u01/oracle/container-scripts && \
@@ -57,7 +49,6 @@ RUN chmod a+xr /u01 && \
     chown -R oracle:oracle $VOLUME_DIR
 
 VOLUME  $VOLUME_DIR
-
 
 # Install
 # ------------------------------------------------------------
