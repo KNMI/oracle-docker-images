@@ -56,7 +56,7 @@ ENV FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
 
 # Copy packages
 # -------------
-COPY $FMW_PKG install.file oraInst.loc /u01/
+ADD $FMW_PKG install.file oraInst.loc /u01/
 RUN chown oracle:oracle -R /u01 && \
     chmod +xr $SCRIPT_FILE && \
     yum install -y libaio && \
@@ -70,7 +70,7 @@ VOLUME  $VOLUME_DIR
 # Install
 # ------------------------------------------------------------
 USER oracle
-RUN cd /u01 && $JAVA_HOME/bin/jar xf /u01/$FMW_PKG && cd - && \
+RUN cd /u01 && cd - && \
     $JAVA_HOME/bin/java -jar /u01/$FMW_JAR -silent -responseFile /u01/install.file -invPtrLoc /u01/oraInst.loc -jreLoc $JAVA_HOME -ignoreSysPrereqs -force -novalidation ORACLE_HOME=$ORACLE_HOME INSTALL_TYPE="WebLogic Server" && \
     rm /u01/$FMW_JAR /u01/$FMW_PKG /u01/oraInst.loc /u01/install.file
 
