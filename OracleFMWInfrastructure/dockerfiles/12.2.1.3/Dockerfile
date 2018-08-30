@@ -40,6 +40,7 @@ ENV ORACLE_HOME=/u01/oracle \
 # Setup subdirectory for FMW install package and container-scripts
 # -----------------------------------------------------------------
 RUN mkdir -p /u01 && \
+    chown oracle:oracle /u01 && \
     chmod a+xr /u01 && \
     useradd -b /u01 -d /u01/oracle -m -s /bin/bash oracle && \
     mkdir -p /u01/oracle/container-scripts
@@ -56,9 +57,8 @@ ENV FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
 
 # Copy packages
 # -------------
-ADD $FMW_PKG install.file oraInst.loc /u01/
-RUN chown oracle:oracle -R /u01 && \
-    chmod +xr $SCRIPT_FILE && \
+ADD --chown=oracle:oracle $FMW_PKG install.file oraInst.loc /u01/
+RUN chmod +xr $SCRIPT_FILE && \
     yum install -y libaio && \
     rm -rf /var/cache/yum && \
     mkdir -p $VOLUME_DIR && \
@@ -72,7 +72,7 @@ VOLUME  $VOLUME_DIR
 USER oracle
 RUN cd /u01 && cd - && \
     $JAVA_HOME/bin/java -jar /u01/$FMW_JAR -silent -responseFile /u01/install.file -invPtrLoc /u01/oraInst.loc -jreLoc $JAVA_HOME -ignoreSysPrereqs -force -novalidation ORACLE_HOME=$ORACLE_HOME INSTALL_TYPE="WebLogic Server" && \
-    rm /u01/$FMW_JAR /u01/$FMW_PKG /u01/oraInst.loc /u01/install.file
+    rm /u01/$FMW_JAR /u01/oraInst.loc /u01/install.file
 
 WORKDIR ${ORACLE_HOME}
 
