@@ -35,17 +35,6 @@ ENV ORACLE_HOME=/u01/oracle \
     VOLUME_DIR=/u01/oracle/user_projects \
     PATH=$PATH:/usr/java/default/bin:/u01/oracle/oracle_common/common/bin:/u01/oracle/wlserver/common/bin:/u01/oracle/container-scripts
 
-
-#USER root
-# Setup subdirectory for FMW install package and container-scripts
-# -----------------------------------------------------------------
-RUN mkdir -p /u01 && \
-    chown oracle:oracle /u01 && \
-    chmod a+xr /u01 && \
-    useradd -b /u01 -d /u01/oracle -m -s /bin/bash oracle && \
-    mkdir -p /u01/oracle/container-scripts
-
-
 # Copy packages and scripts
 # -------------
 COPY container-scripts/* /u01/oracle/container-scripts/
@@ -58,7 +47,10 @@ ENV FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
 # Copy packages
 # -------------
 ADD --chown=oracle:oracle $FMW_PKG install.file oraInst.loc /u01/
-RUN chmod +xr $SCRIPT_FILE && \
+RUN chmod a+xr /u01 && \
+    useradd -b /u01 -d /u01/oracle -m -s /bin/bash oracle && \
+    mkdir -p /u01/oracle/container-scripts && \
+    chmod +xr $SCRIPT_FILE && \
     yum install -y libaio && \
     rm -rf /var/cache/yum && \
     mkdir -p $VOLUME_DIR && \
