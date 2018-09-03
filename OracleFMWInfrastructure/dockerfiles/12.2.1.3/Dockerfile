@@ -1,12 +1,3 @@
-FROM oracle/serverjre:8
-
-ENV FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
-    FMW_JAR=fmw_12.2.1.3.0_infrastructure.jar
-
-COPY $FMW_PKG /
-
-RUN $JAVA_HOME/bin/jar xf /$FMW_PKG
-
 #Copyright (c) 2014-2018 Oracle and/or its affiliates. All rights reserved.
 #
 # Licensed under the Universal Permissive License v 1.0 as shown at http://oss.oracle.com/licenses/upl.
@@ -63,7 +54,7 @@ ENV FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
 
 # Copy packages
 # -------------
-COPY --from=0 --chown=oracle:oracle /$FMW_JAR /u01/
+ADD --chown=oracle:oracle $FMW_PKG /u01/
 COPY --chown=oracle:oracle install.file oraInst.loc /u01/
 RUN chmod +xr $SCRIPT_FILE && \
     yum install -y libaio && \
@@ -76,8 +67,7 @@ VOLUME  $VOLUME_DIR
 # Install
 # ------------------------------------------------------------
 USER oracle
-RUN cd /u01 && cd - && \
-    $JAVA_HOME/bin/java -jar /u01/$FMW_JAR -silent -responseFile /u01/install.file -invPtrLoc /u01/oraInst.loc -jreLoc $JAVA_HOME -ignoreSysPrereqs -force -novalidation ORACLE_HOME=$ORACLE_HOME INSTALL_TYPE="WebLogic Server" && \
+RUN $JAVA_HOME/bin/java -jar /u01/$FMW_JAR -silent -responseFile /u01/install.file -invPtrLoc /u01/oraInst.loc -jreLoc $JAVA_HOME -ignoreSysPrereqs -force -novalidation ORACLE_HOME=$ORACLE_HOME INSTALL_TYPE="WebLogic Server" && \
     rm /u01/$FMW_JAR /u01/oraInst.loc /u01/install.file
 
 WORKDIR ${ORACLE_HOME}
