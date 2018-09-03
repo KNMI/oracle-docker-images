@@ -1,3 +1,12 @@
+FROM oracle/serverjre:8
+
+ENV FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
+    FMW_JAR=fmw_12.2.1.3.0_infrastructure.jar
+
+COPY $FMW_PKG /
+
+RUN $JAVA_HOME/bin/jar xf /$FMW_PKG
+
 #Copyright (c) 2014-2018 Oracle and/or its affiliates. All rights reserved.
 #
 # Licensed under the Universal Permissive License v 1.0 as shown at http://oss.oracle.com/licenses/upl.
@@ -24,7 +33,6 @@ FROM oracle/serverjre:8
 # ----------
 MAINTAINER Monica Riccelli <monica.riccelli@oracle.com>
 
-
 # Common environment variables required for this build
 # ----------------------------------------------------
 ENV ORACLE_HOME=/u01/oracle \
@@ -35,15 +43,14 @@ ENV ORACLE_HOME=/u01/oracle \
     VOLUME_DIR=/u01/oracle/user_projects \
     PATH=$PATH:/usr/java/default/bin:/u01/oracle/oracle_common/common/bin:/u01/oracle/wlserver/common/bin:/u01/oracle/container-scripts
 
-
 #USER root
 # Setup subdirectory for FMW install package and container-scripts
 # -----------------------------------------------------------------
 RUN mkdir -p /u01 && \
     chmod a+xr /u01 && \
     useradd -b /u01 -d /u01/oracle -m -s /bin/bash oracle && \
+    chown oracle:oracle /u01 && \
     mkdir -p /u01/oracle/container-scripts
-
 
 # Copy packages and scripts
 # -------------
@@ -56,9 +63,9 @@ ENV FMW_PKG=fmw_12.2.1.3.0_infrastructure_Disk1_1of1.zip \
 
 # Copy packages
 # -------------
-COPY $FMW_PKG install.file oraInst.loc /u01/
-RUN chown oracle:oracle -R /u01 && \
-    chmod +xr $SCRIPT_FILE && \
+COPY --from=0 --chown=oracle:oracle /$FMW_JAR /u01/
+COPY --chown=oracle:oracle install.file oraInst.loc /u01/
+RUN chmod +xr $SCRIPT_FILE && \
     yum install -y libaio && \
     rm -rf /var/cache/yum && \
     mkdir -p $VOLUME_DIR && \
@@ -66,13 +73,11 @@ RUN chown oracle:oracle -R /u01 && \
 
 VOLUME  $VOLUME_DIR
 
-
 # Install
 # ------------------------------------------------------------
 USER oracle
-RUN cd /u01 && $JAVA_HOME/bin/jar xf /u01/$FMW_PKG && cd - && \
-    $JAVA_HOME/bin/java -jar /u01/$FMW_JAR -silent -responseFile /u01/install.file -invPtrLoc /u01/oraInst.loc -jreLoc $JAVA_HOME -ignoreSysPrereqs -force -novalidation ORACLE_HOME=$ORACLE_HOME INSTALL_TYPE="WebLogic Server" && \
-    rm /u01/$FMW_JAR /u01/$FMW_PKG /u01/oraInst.loc /u01/install.file
+RUN $JAVA_HOME/bin/java -jar /u01/$FMW_JAR -silent -responseFile /u01/install.file -invPtrLoc /u01/oraInst.loc -jreLoc $JAVA_HOME -ignoreSysPrereqs -force -novalidation ORACLE_HOME=$ORACLE_HOME INSTALL_TYPE="WebLogic Server" && \
+    rm /u01/$FMW_JAR /u01/oraInst.loc /u01/install.file
 
 WORKDIR ${ORACLE_HOME}
 
